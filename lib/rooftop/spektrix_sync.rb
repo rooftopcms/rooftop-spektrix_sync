@@ -1,4 +1,5 @@
 require 'active_support'
+require 'colorize'
 
 require "rooftop/spektrix_sync/version"
 require 'require_all'

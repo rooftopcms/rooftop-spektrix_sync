@@ -11,7 +11,7 @@ module Rooftop
 
       def run
         @spektrix_events.each do |event|
-          puts event.title
+          puts event.title.green
         end
       end
     end
