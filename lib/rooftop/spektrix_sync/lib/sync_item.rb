@@ -5,58 +5,53 @@ module Rooftop
         @rooftop_events = sync_task.rooftop_events
         @spektrix_events = sync_task.spektrix_events
         @spektrix_event = spektrix_event
-        @rooftop_event = @rooftop_events.find {|e| e.custom_attributes[:spektrix_id].to_i == @spektrix_event.id.to_i}
+        @spektrix_instances = @spektrix_event.instances
+        @rooftop_event = @rooftop_events.find {|e| e.meta_attributes[:spektrix_id].to_i == @spektrix_event.id.to_i}
       end
 
       def sync_to_rooftop
-        # find the event
-        if @rooftop_event
-          #we need to be updating
-          update()
-        else
-          create()
-          #we need to be creating
+        begin
+          # find the event
+          if @rooftop_event
+            #we need to be updating
+            update()
+          else
+            create()
+            #we need to be creating
+          end
+        rescue => e
+          puts e.to_s.red
         end
-
-
-
-
-
-        # mop up any which don't exist in spek but do exist in RT
       end
 
       def update
-        update_custom_attributes
+        update_meta_attributes
         update_on_sale
         if @rooftop_event.save!
           puts "Updated #{@rooftop_event.title}".green
-        else
-          puts "Something went wrong saving #{@rooftop_event}".red
         end
-
       end
 
       def create
         @rooftop_event = Rooftop::Events::Event.new({
                                          title: @spektrix_event.title,
                                          content: {basic: {content: @spektrix_event.description}},
+                                         meta_attributes: {}
                                        })
-        update_custom_attributes
+        update_meta_attributes
         update_on_sale
-        if @rooftop_event.save
-          puts "Created #{@rooftop_event.title}".yellow
+
+        # save the event, and add instances
+        if @rooftop_event.save!
+          update_instances
         end
       end
 
       private
-      def update_custom_attributes
-        @rooftop_event.event_meta = {
-          custom_attributes: {
-            spektrix_id: @spektrix_event.id
-          }
-        }
+      def update_meta_attributes
+        @rooftop_event.meta_attributes[:spektrix_id] = @spektrix_event.id
         @spektrix_event.custom_attributes.each do |key, value|
-          @rooftop_event.event_meta[:custom_attributes][key] = value
+          @rooftop_event.meta_attributes[key] = value
         end
       end
 
@@ -67,6 +62,10 @@ module Rooftop
           else
             @rooftop_event.status = 'draft'
         end
+      end
+
+      def update_instances
+
       end
     end
   end
