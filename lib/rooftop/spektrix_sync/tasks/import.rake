@@ -4,6 +4,7 @@ namespace :rooftop do
     task :prepare, [:since] do |task, args|
       since = eval(args[:since]) rescue DateTime.now
       @task = Rooftop::SpektrixSync::SyncTask.new(starting_at: since)
+      @task.logger = ::Rails.logger
     end
 
 
