@@ -54,19 +54,37 @@ module Rooftop
 
       def create_or_update_price_bands
         rooftop_bands = Rooftop::Events::PriceBand.all.to_a
-        Spektrix::Tickets::Band.all.each do |band|
+        spektrix_bands = Spektrix::Tickets::Band.all.to_a
+        # create or update existing
+        spektrix_bands.each do |band|
           rooftop_band = rooftop_bands.find {|b| b.title == band.name} || Rooftop::Events::PriceBand.new
           rooftop_band.title = band.name
           rooftop_band.save!
+        end
+
+        #delete ones on rooftop which aren't in spektrix
+        rooftop_titles = rooftop_bands.collect(&:title)
+        spektrix_titles = spektrix_bands.collect(&:name)
+        (rooftop_titles - (rooftop_titles & spektrix_titles)).each do |title|
+          rooftop_bands.find {|b| b.title == title}.destroy
         end
       end
 
       def create_or_update_ticket_types
         rooftop_ticket_types = Rooftop::Events::TicketType.all.to_a
-        Spektrix::Tickets::Type.all.each do |type|
+        spektrix_ticket_types = Spektrix::Tickets::Type.all.to_a
+        # create or update exiting
+        spektrix_ticket_types.each do |type|
           rooftop_ticket_type = rooftop_ticket_types.find {|t| t.title == type.name} || Rooftop::Events::TicketType.new
           rooftop_ticket_type.title = type.name
           rooftop_ticket_type.save!
+        end
+
+        #delete ones on rooftop which aren't in spektrix
+        rooftop_titles = rooftop_ticket_types.collect(&:title)
+        spektrix_titles = spektrix_ticket_types.collect(&:name)
+        (rooftop_titles - (rooftop_titles & spektrix_titles)).each do |title|
+          rooftop_ticket_types.find {|b| b.title == title}.destroy
         end
       end
     end
