@@ -15,7 +15,7 @@ module Rooftop
         update_availability
         update_on_sale
         if @rooftop_instance.save!
-          @logger.debug("Saved instance on #{@rooftop_event.meta_attributes[:starts_at]}")
+          @logger.debug("Saved instance #{@rooftop_instance.id}")
         end
       end
 

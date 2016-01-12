@@ -31,7 +31,7 @@ module Rooftop
         update_meta_attributes
         update_on_sale
         if @rooftop_event.save!
-          @logger.debug("Saved event: #{@rooftop_event.title}")
+          @logger.debug("Saved event: #{@rooftop_event.title} #{@rooftop_event.id}")
           sync_instances
         end
       end
@@ -53,7 +53,7 @@ module Rooftop
       def sync_instances
         @rooftop_instances = @rooftop_event.instances.to_a
         @spektrix_instances = @spektrix_event.instances.to_a
-        @spektrix_instances.each do |instance|
+        @spektrix_instances.each_with_index do |instance, i|
           instance_sync = Rooftop::SpektrixSync::InstanceSync.new(instance, self)
           instance_sync.sync
 

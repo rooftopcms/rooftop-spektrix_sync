@@ -13,6 +13,8 @@ module Rooftop
       end
 
       def run
+        create_or_update_price_bands
+        create_or_update_ticket_types
         create_or_update_events
         delete_orphan_spektrix_events
       end
@@ -47,6 +49,24 @@ module Rooftop
           if event_to_delete.destroy
             @logger.debug("Removed event #{event_to_delete.title}")
           end
+        end
+      end
+
+      def create_or_update_price_bands
+        rooftop_bands = Rooftop::Events::PriceBand.all.to_a
+        Spektrix::Tickets::Band.all.each do |band|
+          rooftop_band = rooftop_bands.find {|b| b.title == band.name} || Rooftop::Events::PriceBand.new
+          rooftop_band.title = band.name
+          rooftop_band.save!
+        end
+      end
+
+      def create_or_update_ticket_types
+        rooftop_ticket_types = Rooftop::Events::TicketType.all.to_a
+        Spektrix::Tickets::Type.all.each do |type|
+          rooftop_ticket_type = rooftop_ticket_types.find {|t| t.title == type.name} || Rooftop::Events::TicketType.new
+          rooftop_ticket_type.title = type.name
+          rooftop_ticket_type.save!
         end
       end
     end
