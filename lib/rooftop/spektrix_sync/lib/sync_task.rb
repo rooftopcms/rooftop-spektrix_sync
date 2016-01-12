@@ -57,6 +57,7 @@ module Rooftop
         spektrix_bands = Spektrix::Tickets::Band.all.to_a
         # create or update existing
         spektrix_bands.each do |band|
+          @logger.debug("Updating band #{band.name}")
           rooftop_band = rooftop_bands.find {|b| b.title == band.name} || Rooftop::Events::PriceBand.new
           rooftop_band.title = band.name
           rooftop_band.save!
@@ -75,6 +76,7 @@ module Rooftop
         spektrix_ticket_types = Spektrix::Tickets::Type.all.to_a
         # create or update exiting
         spektrix_ticket_types.each do |type|
+          @logger.debug("Updating ticket type #{type.name}")
           rooftop_ticket_type = rooftop_ticket_types.find {|t| t.title == type.name} || Rooftop::Events::TicketType.new
           rooftop_ticket_type.title = type.name
           rooftop_ticket_type.save!
