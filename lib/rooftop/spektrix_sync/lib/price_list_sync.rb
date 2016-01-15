@@ -2,14 +2,21 @@ module Rooftop
   module SpektrixSync
     class PriceListSync
 
-      def initialize
-        @spektrix_price_lists = Spektrix::Tickets::PriceList.all.to_a
-        @rooftop_price_lists = Rooftop::Events::PriceList.all.to_a
-        @rooftop_ticket_types = Rooftop::Events::TicketType.all.to_a
-        @rooftop_price_bands = Rooftop::Events::PriceBand.all.to_a
+      def initialize(sync_task)
+        @spektrix_price_lists = sync_task.spektrix_price_lists
+        @rooftop_price_lists = sync_task.rooftop_price_lists
+        @rooftop_ticket_types = sync_task.rooftop_ticket_types
+        @rooftop_price_bands = sync_task.rooftop_price_bands
       end
 
       def run
+        sync_price_lists
+        remove_orphan_price_lists
+      end
+
+      private
+
+      def sync_price_lists
         @spektrix_price_lists.each do |spektrix_price_list|
           # Don't bother syncing a price list where none of the prices have bands.
           if spektrix_price_list.prices.select {|p| !p.band.nil?}.empty?
@@ -29,8 +36,6 @@ module Rooftop
           end
         end
       end
-
-      private
 
       def sync_prices(spektrix_price_list, rooftop_price_list)
         spektrix_price_list.prices.each_with_index do |spektrix_price, i |
@@ -55,6 +60,19 @@ module Rooftop
           new_price.title = "#{spektrix_price.band.name} (£#{new_price.meta_attributes[:ticket_price]})"
           if new_price.save!
             puts "saved #{new_price.meta_attributes[:ticket_price]}: #{spektrix_price.band.name}"
+          end
+        end
+      end
+
+      def remove_orphan_price_lists
+        rooftop_spektrix_ids = @rooftop_price_lists.collect {|l| l.meta_attributes[:spektrix_id].to_i}
+        spektrix_ids = @spektrix_price_lists.collect {|l| l.id.to_i}
+        spektrix_ids_to_remove = (rooftop_spektrix_ids - (rooftop_spektrix_ids & spektrix_ids))
+        rooftop_ids_to_remove = @rooftop_price_lists.select {|l| spektrix_ids_to_remove.include?(l.meta_attributes[:spektrix_id].to_i)}.collect(&:id)
+        rooftop_ids_to_remove.each do |id|
+          list_to_remove  = Rooftop::Events::PriceList.find(id)
+          if list_to_remove.destroy
+            puts "removed rooftop price list #{id} which didn't exist in spektrix"
           end
         end
       end

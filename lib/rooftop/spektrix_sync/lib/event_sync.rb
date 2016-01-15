@@ -3,6 +3,7 @@ module Rooftop
     class EventSync
       attr_reader :spektrix_event,
                   :rooftop_event,
+                  :rooftop_price_lists,
                   :logger
 
       def initialize(spektrix_event, sync_task)
@@ -11,6 +12,7 @@ module Rooftop
         @logger = sync_task.logger
         @spektrix_event = spektrix_event
         @rooftop_event = @rooftop_events.find {|e| e.meta_attributes[:spektrix_id].try(:to_i) == @spektrix_event.id.to_i}
+        @rooftop_price_lists = sync_task.rooftop_price_lists
       end
 
       def sync_to_rooftop

@@ -8,6 +8,7 @@ module Rooftop
         @logger = event_sync.logger
         @spektrix_instance = spektrix_instance
         @rooftop_instance = find_rooftop_instance_by_spektrix_id(@spektrix_instance.id) || @rooftop_event.instances.build
+        @rooftop_price_lists = event_sync.rooftop_price_lists
       end
 
       def sync
@@ -15,6 +16,11 @@ module Rooftop
         unless @rooftop_instance.new?
           @rooftop_instance = @rooftop_event.instances.build(@rooftop_instance.attributes)
           instance_updated = true
+        end
+        update_price
+        if @rooftop_instance.price_list_id.nil?
+          puts "Couldn't continue with this instance because there is no price list"
+          return
         end
         update_meta_attributes
         update_availability
@@ -27,6 +33,10 @@ module Rooftop
       private
       def find_rooftop_instance_by_spektrix_id(spektrix_id)
         @rooftop_event.instances.to_a.find {|i| i.meta_attributes[:spektrix_id] == spektrix_id }
+      end
+
+      def update_price
+        @rooftop_instance.price_list_id = @rooftop_price_lists.find {|l| l.meta_attributes[:spektrix_id].to_i == @spektrix_instance.price_list_id}.try(:id)
       end
 
       def update_meta_attributes

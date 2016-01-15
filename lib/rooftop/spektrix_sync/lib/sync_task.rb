@@ -2,7 +2,12 @@ module Rooftop
   module SpektrixSync
     class SyncTask
       attr_accessor :starting_at, :logger
-      attr_reader :spektrix_events, :rooftop_events
+      attr_reader :spektrix_events,
+                  :rooftop_events,
+                  :spektrix_price_lists,
+                  :rooftop_price_lists,
+                  :rooftop_ticket_types,
+                  :rooftop_price_bands
 
       def initialize(starting_at: DateTime.now)
         Rooftop.preview = true
@@ -10,13 +15,23 @@ module Rooftop
         @spektrix_events = Spektrix::Events::Event.all(instance_start_from: @starting_at.iso8601).to_a
         @rooftop_events = Rooftop::Events::Event.all.to_a
         @logger = Logger.new(STDOUT)
+        @spektrix_price_lists = Spektrix::Tickets::PriceList.all.to_a
+        @rooftop_price_lists = Rooftop::Events::PriceList.all.to_a
+        @rooftop_ticket_types = Rooftop::Events::TicketType.all.to_a
+        @rooftop_price_bands = Rooftop::Events::PriceBand.all.to_a
       end
 
       def run
-        create_or_update_price_bands
-        create_or_update_ticket_types
-        create_or_update_events
-        delete_orphan_spektrix_events
+        begin
+          create_or_update_price_bands
+          create_or_update_ticket_types
+          create_or_update_prices
+          create_or_update_events
+          delete_orphan_spektrix_events
+        rescue => e
+          @logger.warn e
+        end
+
       end
 
       private
@@ -88,6 +103,10 @@ module Rooftop
         (rooftop_titles - (rooftop_titles & spektrix_titles)).each do |title|
           rooftop_ticket_types.find {|b| b.title == title}.destroy
         end
+      end
+
+      def create_or_update_prices
+        PriceListSync.new(self).run
       end
     end
   end
