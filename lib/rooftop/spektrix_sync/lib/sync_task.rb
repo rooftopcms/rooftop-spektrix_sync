@@ -37,16 +37,16 @@ module Rooftop
       private
 
       def create_or_update_events
-        # begin
+        begin
           @spektrix_events.each_with_index do |event, i|
             @logger.debug("Sync #{i+1} / #{@spektrix_events.length}: #{event.title}")
             item = EventSync.new(event, self)
             item.sync_to_rooftop
           end
           delete_orphan_spektrix_events
-        # rescue => e
-        #   @logger.warn(e.to_s)
-        # end
+        rescue => e
+          @logger.warn(e.to_s)
+        end
       end
 
       # Mop up any Rooftop events which don't exist in spektrix, if they have spektrix ID
@@ -68,40 +68,48 @@ module Rooftop
       end
 
       def create_or_update_price_bands
-        rooftop_bands = Rooftop::Events::PriceBand.all.to_a
-        spektrix_bands = Spektrix::Tickets::Band.all.to_a
-        # create or update existing
-        spektrix_bands.each do |band|
-          @logger.debug("Updating band #{band.name}")
-          rooftop_band = rooftop_bands.find {|b| b.title == band.name} || Rooftop::Events::PriceBand.new
-          rooftop_band.title = band.name
-          rooftop_band.save!
-        end
+        begin
+          rooftop_bands = Rooftop::Events::PriceBand.all.to_a
+          spektrix_bands = Spektrix::Tickets::Band.all.to_a
+          # create or update existing
+          spektrix_bands.each do |band|
+            @logger.debug("Updating band #{band.name}")
+            rooftop_band = rooftop_bands.find {|b| b.title == band.name} || Rooftop::Events::PriceBand.new
+            rooftop_band.title = band.name
+            rooftop_band.save!
+          end
 
-        #delete ones on rooftop which aren't in spektrix
-        rooftop_titles = rooftop_bands.collect(&:title)
-        spektrix_titles = spektrix_bands.collect(&:name)
-        (rooftop_titles - (rooftop_titles & spektrix_titles)).each do |title|
-          rooftop_bands.find {|b| b.title == title}.destroy
+          #delete ones on rooftop which aren't in spektrix
+          rooftop_titles = rooftop_bands.collect(&:title)
+          spektrix_titles = spektrix_bands.collect(&:name)
+          (rooftop_titles - (rooftop_titles & spektrix_titles)).each do |title|
+            rooftop_bands.find {|b| b.title == title}.destroy
+          end
+        rescue => e
+          @logger.warn(e.to_s)
         end
       end
 
       def create_or_update_ticket_types
-        rooftop_ticket_types = Rooftop::Events::TicketType.all.to_a
-        spektrix_ticket_types = Spektrix::Tickets::Type.all.to_a
-        # create or update exiting
-        spektrix_ticket_types.each do |type|
-          @logger.debug("Updating ticket type #{type.name}")
-          rooftop_ticket_type = rooftop_ticket_types.find {|t| t.title == type.name} || Rooftop::Events::TicketType.new
-          rooftop_ticket_type.title = type.name
-          rooftop_ticket_type.save!
-        end
+        begin
+          rooftop_ticket_types = Rooftop::Events::TicketType.all.to_a
+          spektrix_ticket_types = Spektrix::Tickets::Type.all.to_a
+          # create or update exiting
+          spektrix_ticket_types.each do |type|
+            @logger.debug("Updating ticket type #{type.name}")
+            rooftop_ticket_type = rooftop_ticket_types.find {|t| t.title == type.name} || Rooftop::Events::TicketType.new
+            rooftop_ticket_type.title = type.name
+            rooftop_ticket_type.save!
+          end
 
-        #delete ones on rooftop which aren't in spektrix
-        rooftop_titles = rooftop_ticket_types.collect(&:title)
-        spektrix_titles = spektrix_ticket_types.collect(&:name)
-        (rooftop_titles - (rooftop_titles & spektrix_titles)).each do |title|
-          rooftop_ticket_types.find {|b| b.title == title}.destroy
+          #delete ones on rooftop which aren't in spektrix
+          rooftop_titles = rooftop_ticket_types.collect(&:title)
+          spektrix_titles = spektrix_ticket_types.collect(&:name)
+          (rooftop_titles - (rooftop_titles & spektrix_titles)).each do |title|
+            rooftop_ticket_types.find {|b| b.title == title}.destroy
+          end
+        rescue => e
+          @logger.warn(e.to_s)
         end
       end
 
