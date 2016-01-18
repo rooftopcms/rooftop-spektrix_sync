@@ -10,15 +10,20 @@ module Rooftop
                   :rooftop_price_bands
 
       def initialize(starting_at)
-        Rooftop.preview = true
-        @starting_at = starting_at || DateTime.now
-        @spektrix_events = Spektrix::Events::Event.all(instance_start_from: @starting_at.iso8601).to_a
-        @rooftop_events = Rooftop::Events::Event.all.to_a
-        @logger = SpektrixSync.logger || Logger.new(STDOUT)
-        @spektrix_price_lists = Spektrix::Tickets::PriceList.all.to_a
-        @rooftop_price_lists = Rooftop::Events::PriceList.all.to_a
-        @rooftop_ticket_types = Rooftop::Events::TicketType.all.to_a
-        @rooftop_price_bands = Rooftop::Events::PriceBand.all.to_a
+        begin
+          Rooftop.preview = true
+          @starting_at = starting_at || DateTime.now
+          @spektrix_events = Spektrix::Events::Event.all(instance_start_from: @starting_at.iso8601).to_a
+          @rooftop_events = Rooftop::Events::Event.all.to_a
+          @logger = SpektrixSync.logger || Logger.new(STDOUT)
+          @spektrix_price_lists = Spektrix::Tickets::PriceList.all.to_a
+          @rooftop_price_lists = Rooftop::Events::PriceList.all.to_a
+          @rooftop_ticket_types = Rooftop::Events::TicketType.all.to_a
+          @rooftop_price_bands = Rooftop::Events::PriceBand.all.to_a
+        rescue => e
+          puts "*** Couldn't start sync: #{e}"
+        end
+
       end
 
       def self.run(starting_at=nil)
