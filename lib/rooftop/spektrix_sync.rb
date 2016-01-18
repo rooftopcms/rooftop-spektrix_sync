@@ -8,6 +8,10 @@ require_rel 'spektrix_sync/lib'
 module Rooftop
   module SpektrixSync
 
+    class << self
+      attr_accessor :logger
+    end
+
     if defined?(::Rails)
       require 'rooftop/spektrix_sync/railtie'
     end

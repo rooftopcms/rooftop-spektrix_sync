@@ -14,11 +14,15 @@ module Rooftop
         @starting_at = starting_at
         @spektrix_events = Spektrix::Events::Event.all(instance_start_from: @starting_at.iso8601).to_a
         @rooftop_events = Rooftop::Events::Event.all.to_a
-        @logger = Logger.new(STDOUT)
+        @logger = SpektrixSync.logger || Logger.new(STDOUT)
         @spektrix_price_lists = Spektrix::Tickets::PriceList.all.to_a
         @rooftop_price_lists = Rooftop::Events::PriceList.all.to_a
         @rooftop_ticket_types = Rooftop::Events::TicketType.all.to_a
         @rooftop_price_bands = Rooftop::Events::PriceBand.all.to_a
+      end
+
+      def self.run(starting_at)
+        self.new(starting_at).run
       end
 
       def run
