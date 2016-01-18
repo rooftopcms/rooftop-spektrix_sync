@@ -19,7 +19,7 @@ module Rooftop
         end
         update_price
         if @rooftop_instance.price_list_id.nil?
-          puts "Couldn't continue with this instance because there is no price list"
+          @logger.warn("Couldn't continue with this instance because there is no price list")
           return
         end
         update_meta_attributes
