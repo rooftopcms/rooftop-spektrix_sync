@@ -58,11 +58,15 @@ module Rooftop
         @spektrix_instances.each_with_index do |instance, i|
           instance_sync = Rooftop::SpektrixSync::InstanceSync.new(instance, self)
           instance_sync.sync
-
         end
 
+        update_event_metadata
       end
 
+      def update_event_metadata
+        @logger.debug("Saved event instances. Updating event metadata")
+        Rooftop::Events::Event.post("#{@rooftop_event.class.collection_path}/#{@rooftop_event.id}/update_metadata")
+      end
     end
   end
 end
