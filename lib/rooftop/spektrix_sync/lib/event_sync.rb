@@ -16,7 +16,7 @@ module Rooftop
       end
 
       def sync_to_rooftop
-        # begin
+        begin
           # find the event
           @rooftop_event ||= Rooftop::Events::Event.new({
             title: @spektrix_event.title,
@@ -24,9 +24,9 @@ module Rooftop
             meta_attributes: {}
           })
           sync()
-        # rescue => e
-        #   @logger.warn(e.to_s)
-        # end
+        rescue => e
+          @logger.error(e.to_s)
+        end
       end
 
       def sync
@@ -49,7 +49,11 @@ module Rooftop
       end
 
       def update_on_sale
-        @rooftop_event.status = @spektrix_event.is_on_sale ? 'publish' : 'draft'
+        if Spektrix.configuration.present? && Spektrix.configuration[:on_sale_if_new_event]
+          @rooftop_event.status = @spektrix_event.is_on_sale ? 'publish' : 'draft'
+        else
+          @rooftop_event.status ||= "draft"
+        end
       end
 
       def sync_instances

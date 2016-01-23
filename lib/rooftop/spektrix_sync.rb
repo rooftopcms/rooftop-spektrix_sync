@@ -9,7 +9,7 @@ module Rooftop
   module SpektrixSync
 
     class << self
-      attr_accessor :logger
+      attr_accessor :logger, :configuration
     end
 
     if defined?(::Rails)

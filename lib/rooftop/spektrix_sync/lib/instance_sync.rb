@@ -13,20 +13,20 @@ module Rooftop
 
       def sync
         # This is a bit of a hack: we have to create a new instance and assign all the attributes from the old one, so it has an _event_id param.
-        unless @rooftop_instance.new?
+        if @rooftop_instance.persisted?
           @rooftop_instance = @rooftop_event.instances.build(@rooftop_instance.attributes)
           instance_updated = true
         end
         update_price
         if @rooftop_instance.price_list_id.nil?
-          @logger.warn("Couldn't continue with this instance because there is no price list")
+          @logger.warn("No price list for Spektrix instance id #{@spektrix_instance.id}")
           return
         end
         update_meta_attributes
         update_availability
         update_on_sale
         if @rooftop_instance.save!
-          @logger.debug("#{instance_updated ? "Updated" : "Created"} instance #{@rooftop_instance.id}")
+          @logger.debug("#{instance_updated ? "Updated" : "Created"} Rooftop instance #{@rooftop_instance.id}")
         end
       end
 
@@ -44,17 +44,20 @@ module Rooftop
       end
 
       def update_on_sale
-        @rooftop_instance.status = @spektrix_instance.is_on_sale ? "publish" : "draft"
+        if Spektrix.configuration.present? && Spektrix.configuration[:on_sale_if_new_event]
+          @rooftop_instance.status = @spektrix_instance.is_on_sale ? 'publish' : 'draft'
+        else
+          @rooftop_instance.status ||= "draft"
+        end
       end
 
       def update_availability
-        @spektrix_instance_status = @spektrix_instance.status
         availability = {
           availability: {
             starts_at: @spektrix_instance.start.iso8601,
             stops_at: @spektrix_instance.start.advance(seconds: @rooftop_event.meta_attributes[:duration]),
-            seats_capacity: @spektrix_instance_status.capacity,
-            seats_available: @spektrix_instance_status.available
+            seats_capacity: @spektrix_instance.status.capacity,
+            seats_available: @spektrix_instance.status.available
           }
         }
         @rooftop_instance.meta_attributes.merge!(availability)
