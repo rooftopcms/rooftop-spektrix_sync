@@ -52,6 +52,30 @@ module Rooftop
         self.new(starting_at,opts).run
       end
 
+      def self.run_events_import(starting_at=nil)
+        self.run(starting_at)
+      end
+
+      def self.run_full_import(starting_at=nil)
+        self.run(starting_at, {
+          import_price_bands: true,
+          import_ticket_types: true,
+          import_prices: true,
+          import_events: true,
+          delete_orphan_events: true
+        })
+      end
+
+      def self.run_prices_import(starting_at=nil)
+        self.run(starting_at, {
+          import_price_bands: true,
+          import_ticket_types: true,
+          import_prices: true,
+          import_events: false,
+          delete_orphan_events: false
+        })
+      end
+
 
       def run
         begin
