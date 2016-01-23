@@ -7,14 +7,24 @@ module Rooftop
                   :spektrix_price_lists,
                   :rooftop_price_lists,
                   :rooftop_ticket_types,
-                  :rooftop_price_bands
+                  :rooftop_price_bands,
+                  :options
 
-      def initialize(starting_at)
+      def initialize(starting_at, opts={})
         begin
           Rooftop.preview = true
           @starting_at = starting_at || DateTime.now
           @logger = SpektrixSync.logger || Logger.new(STDOUT)
           fetch_event_data
+          default_opts = {
+            import_price_bands: false,
+            import_ticket_types: false,
+            import_prices: false,
+            import_events: true,
+            delete_orphan_events: true
+          }
+          @options = default_opts.merge!(opts)
+          @logger.debug("Running with options: #{@options.select {|k,v| k if v}.keys.join(", ")}")
         rescue => e
           @logger.error("Couldn't start sync: #{e}")
         end
@@ -38,21 +48,33 @@ module Rooftop
 
 
 
-      def self.run(starting_at=nil)
-        self.new(starting_at).run
+      def self.run(starting_at=nil, opts={})
+        self.new(starting_at,opts).run
       end
+
 
       def run
         begin
-          create_or_update_price_bands
-          fetch_event_data
-          create_or_update_ticket_types
-          fetch_event_data
-          create_or_update_prices
-          fetch_event_data
-          create_or_update_events
-          fetch_event_data
-          delete_orphan_spektrix_events
+          if @options[:import_price_bands]
+            fetch_event_data
+            create_or_update_price_bands
+          end
+          if @options[:import_ticket_types]
+            fetch_event_data
+            create_or_update_ticket_types
+          end
+          if @options[:import_prices]
+            fetch_event_data
+            create_or_update_prices
+          end
+          if @options[:import_events]
+            fetch_event_data
+            create_or_update_events
+          end
+          if @options[:delete_orphan_events]
+            fetch_event_data
+            delete_orphan_spektrix_events
+          end
         rescue => e
           @logger.error(e)
         end
