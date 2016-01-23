@@ -7,7 +7,7 @@ module Rooftop
         @rooftop_event = event_sync.rooftop_event
         @logger = event_sync.logger
         @spektrix_instance = spektrix_instance
-        @rooftop_instance = find_rooftop_instance_by_spektrix_id(@spektrix_instance.id) || @rooftop_event.instances.build
+        @rooftop_instance = find_rooftop_instance_by_spektrix_id(@spektrix_instance.id) || @rooftop_event.instances.build(status: nil)
         @rooftop_price_lists = event_sync.rooftop_price_lists
       end
 
@@ -44,7 +44,7 @@ module Rooftop
       end
 
       def update_on_sale
-        if Spektrix.configuration.present? && Spektrix.configuration[:on_sale_if_new_event]
+        if SpektrixSync.configuration.present? && SpektrixSync.configuration[:on_sale_if_new_event]
           @rooftop_instance.status = @spektrix_instance.is_on_sale ? 'publish' : 'draft'
         else
           @rooftop_instance.status ||= "draft"

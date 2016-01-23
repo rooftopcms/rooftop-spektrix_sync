@@ -21,7 +21,8 @@ module Rooftop
           @rooftop_event ||= Rooftop::Events::Event.new({
             title: @spektrix_event.title,
             content: {basic: {content: @spektrix_event.description}},
-            meta_attributes: {}
+            meta_attributes: {},
+            status: nil
           })
           sync()
         rescue => e
@@ -49,7 +50,7 @@ module Rooftop
       end
 
       def update_on_sale
-        if Spektrix.configuration.present? && Spektrix.configuration[:on_sale_if_new_event]
+        if SpektrixSync.configuration.present? && SpektrixSync.configuration[:on_sale_if_new_event]
           @rooftop_event.status = @spektrix_event.is_on_sale ? 'publish' : 'draft'
         else
           @rooftop_event.status ||= "draft"
