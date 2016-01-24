@@ -116,7 +116,6 @@ module Rooftop
             item = EventSync.new(event, self)
             item.sync_to_rooftop
           end
-          delete_orphan_spektrix_events
         rescue => e
           @logger.error(e.to_s)
         end
