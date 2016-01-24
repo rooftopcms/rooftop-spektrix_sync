@@ -111,6 +111,7 @@ module Rooftop
 
       def create_or_update_events
         begin
+          tries ||= 2
           @spektrix_events.each_with_index do |event, i|
             @logger.debug("Sync #{i+1} / #{@spektrix_events.length}: #{event.title}")
             item = EventSync.new(event, self)
@@ -118,6 +119,7 @@ module Rooftop
           end
         rescue => e
           @logger.error(e.to_s)
+          retry if (tries -= 1).zero?
         end
       end
 

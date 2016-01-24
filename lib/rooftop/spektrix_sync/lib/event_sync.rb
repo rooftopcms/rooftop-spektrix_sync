@@ -61,8 +61,13 @@ module Rooftop
         @rooftop_instances = @rooftop_event.instances.to_a
         @spektrix_instances = @spektrix_event.instances.to_a
         @spektrix_instances.each_with_index do |instance, i|
-          instance_sync = Rooftop::SpektrixSync::InstanceSync.new(instance, self)
-          instance_sync.sync
+          begin
+            tries ||= 2
+            instance_sync = Rooftop::SpektrixSync::InstanceSync.new(instance, self)
+            instance_sync.sync
+          rescue
+            retry unless (tries -= 1 ).zero?
+          end
         end
 
         update_event_metadata
