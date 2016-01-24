@@ -15,7 +15,6 @@ module Rooftop
           Rooftop.preview = true
           @starting_at = starting_at || DateTime.now
           @logger = SpektrixSync.logger || Logger.new(STDOUT)
-          fetch_event_data
           default_opts = {
             import_price_bands: false,
             import_ticket_types: false,
