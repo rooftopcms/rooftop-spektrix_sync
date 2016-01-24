@@ -21,7 +21,7 @@ module Rooftop
             import_ticket_types: false,
             import_prices: false,
             import_events: true,
-            delete_orphan_events: true
+            delete_orphan_events: false
           }
           @options = default_opts.merge!(opts)
           @logger.debug("Running with options: #{@options.select {|k,v| k if v}.keys.join(", ")}")
@@ -62,7 +62,7 @@ module Rooftop
           import_ticket_types: true,
           import_prices: true,
           import_events: true,
-          delete_orphan_events: true
+          delete_orphan_events: false
         })
       end
 
