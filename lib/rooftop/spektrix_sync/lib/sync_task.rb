@@ -24,7 +24,9 @@ module Rooftop
             delete_orphan_events: false
           }
           @options = default_opts.merge!(opts)
+          @logger.debug("*************************************************************************")
           @logger.debug("Running with options: #{@options.select {|k,v| k if v}.keys.join(", ")}")
+          @logger.debug("*************************************************************************")
         rescue => e
           @logger.error("Couldn't start sync: #{e}")
         end
@@ -95,10 +97,11 @@ module Rooftop
             fetch_event_data
             create_or_update_events
           end
-          if @options[:delete_orphan_events]
-            fetch_event_data
-            delete_orphan_spektrix_events
-          end
+          # TODO: the delete method is over-eager. Resolve the issue.
+          # if @options[:delete_orphan_events]
+          #   fetch_event_data
+          #   delete_orphan_spektrix_events
+          # end
         rescue => e
           @logger.error(e)
         end

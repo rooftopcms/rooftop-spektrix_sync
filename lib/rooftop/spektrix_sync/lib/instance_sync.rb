@@ -44,11 +44,15 @@ module Rooftop
       end
 
       def update_on_sale
-        if SpektrixSync.configuration.present? && SpektrixSync.configuration[:on_sale_if_new_event]
-          @rooftop_instance.status = @spektrix_instance.is_on_sale ? 'publish' : 'draft'
-        else
-          @rooftop_instance.status ||= "draft"
-        end
+        # TODO: there is a bug in the Rooftop events plugin which means that instances which are draft won't be shown
+        # as assigned to the event. Because it's a nested resource, there's no real risk to publishing
+        # the instance immediately.
+        # if SpektrixSync.configuration.present? && SpektrixSync.configuration[:on_sale_if_new_event]
+        #   @rooftop_instance.status = @spektrix_instance.is_on_sale ? 'publish' : 'draft'
+        # else
+        #   @rooftop_instance.status ||= "draft"
+        # end
+        @rooftop_instance.status = "publish"
       end
 
       def update_availability
