@@ -53,7 +53,7 @@ module Rooftop
         if SpektrixSync.configuration.present? && SpektrixSync.configuration[:on_sale_if_new_event]
           @rooftop_event.status = @spektrix_event.is_on_sale ? 'publish' : 'draft'
         else
-          @rooftop_event.status ||= "draft"
+          @rooftop_event.status = "draft"
         end
       end
 
