@@ -54,7 +54,7 @@ module Rooftop
         # end
         # @rooftop_instance.status = "publish"
         
-        @rooftop_instance.status = @spektrix_instance.is_on_sale ? 'publish' : 'draft'
+        @rooftop_instance.status = @spektrix_instance.is_on_sale=="true" ? 'publish' : 'draft'
       end
 
       def update_availability
