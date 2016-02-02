@@ -32,19 +32,22 @@ module Rooftop
 
       end
 
-      def fetch_event_data
+      def fetch_rooftop_and_spektrix_data
         @logger.debug("Fetching all Spektrix events")
         @spektrix_events = @spektrix_events.present? ? @spektrix_events : Spektrix::Events::Event.all(instance_start_from: @starting_at.iso8601).to_a
+        if @options[:spektrix_event_id]
+          @spektrix_events = @spektrix_events.select {|e| e.id == @options[:spektrix_event_id].to_s}
+        end
         @logger.debug("Fetching all Rooftop events")
-        @rooftop_events = @rooftop_events.present? ? @rooftop_events : Rooftop::Events::Event.all.to_a
+        @rooftop_events = Rooftop::Events::Event.all.to_a
         @logger.debug("Fetching all Spektrix price lists")
         @spektrix_price_lists = @spektrix_price_lists.present? ? @spektrix_price_lists : Spektrix::Tickets::PriceList.all.to_a
         @logger.debug("Fetching all Rooftop Price lists")
-        @rooftop_price_lists = @rooftop_price_lists.present? ? @rooftop_price_lists : Rooftop::Events::PriceList.all.to_a
+        @rooftop_price_lists = Rooftop::Events::PriceList.all.to_a
         @logger.debug("Fetching all Rooftop ticket types")
-        @rooftop_ticket_types = @rooftop_ticket_types.present? ? @rooftop_ticket_types : Rooftop::Events::TicketType.all.to_a
+        @rooftop_ticket_types = Rooftop::Events::TicketType.all.to_a
         @logger.debug("Fetching all Rooftop price bands")
-        @rooftop_price_bands = @rooftop_price_bands.present? ? @rooftop_price_bands : Rooftop::Events::PriceBand.all.to_a
+        @rooftop_price_bands = Rooftop::Events::PriceBand.all.to_a
       end
 
 
@@ -53,8 +56,9 @@ module Rooftop
         self.new(starting_at,opts).run
       end
 
-      def self.run_events_import(starting_at=nil)
-        self.run(starting_at)
+      def self.run_events_import(starting_at=nil, event_id=nil)
+        opts = event_id.present? ? {spektrix_event_id: event_id} : {}
+        self.run(starting_at, opts)
       end
 
       def self.run_full_import(starting_at=nil)
@@ -81,19 +85,19 @@ module Rooftop
       def run
         begin
           if @options[:import_price_bands]
-            fetch_event_data
+            fetch_rooftop_and_spektrix_data
             create_or_update_price_bands
           end
           if @options[:import_ticket_types]
-            fetch_event_data
+            fetch_rooftop_and_spektrix_data
             create_or_update_ticket_types
           end
           if @options[:import_prices]
-            fetch_event_data
+            fetch_rooftop_and_spektrix_data
             create_or_update_prices
           end
           if @options[:import_events]
-            fetch_event_data
+            fetch_rooftop_and_spektrix_data
             create_or_update_events
           end
           # TODO: the delete method is over-eager. Resolve the issue.
@@ -119,7 +123,7 @@ module Rooftop
           end
         rescue => e
           @logger.error(e.to_s)
-          retry if (tries -= 1).zero?
+          retry unless (tries -= 1).zero?
         end
       end
 
@@ -162,6 +166,8 @@ module Rooftop
         rescue => e
           @logger.error(e.to_s)
         end
+
+
       end
 
       def create_or_update_ticket_types
@@ -187,12 +193,15 @@ module Rooftop
         end
       end
 
+      # This is where we generate a price list sync instance
       def create_or_update_prices
-        if @rooftop_price_lists.empty?
-          p = 1
-        end
-
         PriceListSync.new(self).run
+        #In this circumstance, we need to assume some prices have changed, so we'll invalidate the
+        # instance variable which contains the collection of prices on both sides. This means that
+        # next time fetch_rooftop_and_spektrix_data is called, the latest will be pulled from the APIs.
+        @spektrix_price_lists = nil
+        @rooftop_price_lists = nil
+
       end
     end
   end
