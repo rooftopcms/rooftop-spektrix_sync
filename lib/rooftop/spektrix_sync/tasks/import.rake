@@ -2,7 +2,7 @@ namespace :rooftop do
   namespace :spektrix do
 
     task :prepare, [:since] do |task, args|
-      Rooftop::SpektrixSync.logger = Logger.new(STDOUT)
+      Rooftop::SpektrixSync.logger = Logger.new('/var/log/rooftop-spektrix-import.log', 'daily')
       @since = eval(args[:since]) rescue DateTime.now
     end
 
