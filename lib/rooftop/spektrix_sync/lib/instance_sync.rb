@@ -66,6 +66,7 @@ module Rooftop
             seats_available: @spektrix_instance.status.available
           }
         }
+        @rooftop_instance.title = @rooftop_event.title + ": " + @spektrix_instance.start.strftime("%d %b %Y %H:%M")
         @rooftop_instance.meta_attributes.merge!(availability)
       end
 
