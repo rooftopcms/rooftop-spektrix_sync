@@ -12,7 +12,8 @@ module Rooftop
 
       def run
         sync_price_lists
-        remove_orphan_price_lists
+        # Todo we need to put this in a rake task instead of running every time.
+        # remove_orphan_price_lists
       end
 
       private
