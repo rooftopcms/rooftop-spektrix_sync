@@ -96,13 +96,13 @@ module Rooftop
       end
 
       def find_rooftop_ticket_type(spektrix_price)
-        @rooftop_ticket_types.find {|t| CGI::unescapeHTML(t.title) == CGI::unescapeHTML(spektrix_price.ticket_type.name)}
+        @rooftop_ticket_types.find {|t| t.title.gsub(/&#8211\;/, '-') == CGI::unescapeHTML(spektrix_price.ticket_type.name)}
       end
 
       def find_rooftop_price_band(spektrix_price)
-        @rooftop_price_bands.find {|b| CGI::unescapeHTML(b.title) == CGI::unescapeHTML(spektrix_price.band.name)}
+        @rooftop_price_bands.find {|b| b.title.gsub(/&#8211\;/, '-') == CGI::unescapeHTML(spektrix_price.band.name)}
       end
-      
+
     end
   end
 end
