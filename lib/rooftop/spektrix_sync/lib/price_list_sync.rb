@@ -57,12 +57,14 @@ module Rooftop
             if current_rooftop_price
               new_price.assign_attributes(current_rooftop_price.attributes)
             end
+
             new_price.meta_attributes = {
               is_band_default: (spektrix_price.is_band_default == "true"),
               ticket_type_id: find_rooftop_ticket_type(spektrix_price).id,
               price_band_id: find_rooftop_price_band(spektrix_price).id,
               ticket_price: spektrix_price.price.to_f
             }
+
             new_price.title = "#{spektrix_price.band.name} (£#{new_price.meta_attributes[:ticket_price]})"
             if new_price.save!
               @logger.debug("Spektrix price list ID: #{spektrix_price_list.id}: Saved price £#{new_price.meta_attributes[:ticket_price]} with ticket type #{spektrix_price.ticket_type.name} for price band #{spektrix_price.band.name}")
@@ -96,11 +98,11 @@ module Rooftop
       end
 
       def find_rooftop_ticket_type(spektrix_price)
-        @rooftop_ticket_types.find {|t| t.title.gsub(/&#8211\;/, '-') == CGI::unescapeHTML(spektrix_price.ticket_type.name)}
+        @rooftop_ticket_types.find {|t| CGI::unescapeHTML(t.title.gsub(/&#8211\;/, '-')) == CGI::unescapeHTML(spektrix_price.ticket_type.name)}
       end
 
       def find_rooftop_price_band(spektrix_price)
-        @rooftop_price_bands.find {|b| b.title.gsub(/&#8211\;/, '-') == CGI::unescapeHTML(spektrix_price.band.name)}
+        @rooftop_price_bands.find {|b| CGI::unescapeHTML(b.title.gsub(/&#8211\;/, '-')) == CGI::unescapeHTML(spektrix_price.band.name)}
       end
 
     end
