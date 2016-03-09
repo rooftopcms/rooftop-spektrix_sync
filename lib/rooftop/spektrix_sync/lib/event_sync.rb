@@ -33,13 +33,35 @@ module Rooftop
       def sync
         update_meta_attributes
         update_on_sale
-        if @rooftop_event.save!
-          @logger.debug("Saved event: #{@rooftop_event.title} #{@rooftop_event.id}")
-          sync_instances
+
+        sync_event_instances = true
+
+        if event_requires_sync?
+          @rooftop_event.meta_attributes[:spektrix_hash] = generate_spektrix_hash(@spektrix_event)
+
+          if @rooftop_event.save!
+            @logger.debug("Saved event: #{@rooftop_event.title} #{@rooftop_event.id}")
+          else
+            sync_event_instances = false
+          end
+        else
+          @logger.debug("Skipping event update")
         end
+
+        sync_instances if sync_event_instances
       end
 
       private
+      def event_requires_sync?
+        rooftop_event_hash = @rooftop_event.meta_attributes['spektrix_hash']
+
+        @rooftop_event.id.nil? || !rooftop_event_hash || rooftop_event_hash != generate_spektrix_hash(@spektrix_event)
+      end
+
+      def generate_spektrix_hash(event)
+        Digest::MD5.hexdigest(event.attributes.to_s)
+      end
+
       def update_meta_attributes
         @rooftop_event.meta_attributes ||= {}
         @rooftop_event.meta_attributes[:spektrix_id] = @spektrix_event.id

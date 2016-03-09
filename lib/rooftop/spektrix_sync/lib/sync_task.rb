@@ -33,11 +33,14 @@ module Rooftop
       end
 
       def fetch_rooftop_and_spektrix_data
-        @logger.debug("Fetching all Spektrix events")
         @spektrix_events = @spektrix_events.present? ? @spektrix_events : Spektrix::Events::Event.all(instance_start_from: @starting_at.iso8601).to_a
         if @options[:spektrix_event_id]
+          @logger.debug("Selecting single Spektrix event")
           @spektrix_events = @spektrix_events.select {|e| e.id == @options[:spektrix_event_id].to_s}
+        else
+          @logger.debug("Fetching all Spektrix events")
         end
+
         @logger.debug("Fetching all Rooftop events")
         @rooftop_events = Rooftop::Events::Event.all.to_a
         @logger.debug("Fetching all Spektrix price lists")
@@ -56,7 +59,7 @@ module Rooftop
         self.new(starting_at,opts).run
       end
 
-      def self.run_events_import(starting_at=nil, event_id=nil)
+      def self.run_events_import(starting_at=nil, event_id=8002)
         opts = event_id.present? ? {spektrix_event_id: event_id} : {}
         self.run(starting_at, opts)
       end

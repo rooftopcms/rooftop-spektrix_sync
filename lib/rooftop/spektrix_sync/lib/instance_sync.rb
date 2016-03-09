@@ -25,12 +25,27 @@ module Rooftop
         update_meta_attributes
         update_availability
         update_on_sale
-        if @rooftop_instance.save!
-          @logger.debug("#{instance_updated ? "Updated" : "Created"} Rooftop instance #{@rooftop_instance.id}")
+
+        if event_instance_requires_sync?
+          @rooftop_instance.meta_attributes[:spektrix_hash] = generate_spektrix_hash(@spektrix_instance)
+
+          if @rooftop_instance.save!
+            @logger.debug("#{instance_updated ? "Updated" : "Created"} Rooftop instance #{@rooftop_instance.id}")
+          end
         end
       end
 
       private
+      def event_instance_requires_sync?
+        rooftop_event_instance_hash = @rooftop_instance.meta_attributes['spektrix_hash']
+
+        @rooftop_instance.id.nil? || !rooftop_event_instance_hash || rooftop_event_instance_hash != generate_spektrix_hash(@spektrix_instance)
+      end
+
+      def generate_spektrix_hash(event_instance)
+        Digest::MD5.hexdigest(event_instance.attributes.to_s)
+      end
+
       def find_rooftop_instance_by_spektrix_id(spektrix_id)
         @rooftop_event.instances.to_a.find {|i| i.meta_attributes[:spektrix_id] == spektrix_id }
       end
@@ -40,7 +55,9 @@ module Rooftop
       end
 
       def update_meta_attributes
+        current_spektrix_hash = @rooftop_instance.meta_attributes['spektrix_hash']
         @rooftop_instance.meta_attributes = @spektrix_instance.custom_attributes.merge(spektrix_id: @spektrix_instance.id)
+        @rooftop_instance.meta_attributes['spektrix_hash'] = current_spektrix_hash
       end
 
       def update_on_sale
