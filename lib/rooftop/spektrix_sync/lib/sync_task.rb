@@ -61,7 +61,7 @@ module Rooftop
         self.new(starting_at,opts).run
       end
 
-      def self.run_events_import(starting_at=nil, event_id=2052)
+      def self.run_events_import(starting_at=nil, event_id=nil)
         opts = event_id.present? ? {spektrix_event_id: event_id} : {}
         self.run(starting_at, opts)
       end
