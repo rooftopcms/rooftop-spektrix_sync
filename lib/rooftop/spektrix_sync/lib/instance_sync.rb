@@ -32,6 +32,8 @@ module Rooftop
           if @rooftop_instance.save!
             @logger.debug("#{instance_updated ? "Updated" : "Created"} Rooftop instance #{@rooftop_instance.id}")
           end
+        else
+          @logger.debug("Skipping event instance save")
         end
       end
 
