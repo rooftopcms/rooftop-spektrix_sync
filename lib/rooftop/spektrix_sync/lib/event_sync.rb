@@ -12,9 +12,11 @@ module Rooftop
         @spektrix_events = sync_task.spektrix_events
         @logger = sync_task.logger
         @spektrix_event = spektrix_event
-        @spektrix_instance_statuses = Spektrix::Events::InstanceStatus.where(event_id: @spektrix_event.id, all: true).to_a
         @rooftop_event = @rooftop_events.find {|e| e.meta_attributes[:spektrix_id].try(:to_i) == @spektrix_event.id.to_i}
         @rooftop_price_lists = sync_task.rooftop_price_lists
+
+        @logger.debug("Fetching all instance statuses for event")
+        @spektrix_instance_statuses = Spektrix::Events::InstanceStatus.where(event_id: @spektrix_event.id, all: true).to_a
       end
 
       def sync_to_rooftop

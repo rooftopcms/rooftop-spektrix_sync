@@ -43,18 +43,19 @@ module Rooftop
 
         @logger.debug("Fetching all Rooftop events")
         @rooftop_events = Rooftop::Events::Event.all.to_a
-        @logger.debug("Fetching all Spektrix price lists")
-        @spektrix_price_lists = @spektrix_price_lists.present? ? @spektrix_price_lists : Spektrix::Tickets::PriceList.all.to_a
-        @logger.debug("Fetching all Rooftop Price lists")
-        @rooftop_price_lists = Rooftop::Events::PriceList.all.to_a
-        @logger.debug("Fetching all Rooftop ticket types")
-        @rooftop_ticket_types = Rooftop::Events::TicketType.all.to_a
-        @logger.debug("Fetching all Rooftop price bands")
-        @rooftop_price_bands = Rooftop::Events::PriceBand.all.to_a
+
+        if @options[:import_price_bands] || @options[:import_ticket_types] || @options[:import_prices]
+          @logger.debug("Fetching all Spektrix price lists")
+          @spektrix_price_lists = @spektrix_price_lists.present? ? @spektrix_price_lists : Spektrix::Tickets::PriceList.all.to_a
+          @logger.debug("Fetching all Rooftop Price lists")
+          @rooftop_price_lists = Rooftop::Events::PriceList.all.to_a
+          @logger.debug("Fetching all Rooftop ticket types")
+          @rooftop_ticket_types = Rooftop::Events::TicketType.all.to_a
+          @logger.debug("Fetching all Rooftop price bands")
+          @rooftop_price_bands = Rooftop::Events::PriceBand.all.to_a
+        end
       end
-
-
-
+      
       def self.run(starting_at=nil, opts={})
         self.new(starting_at,opts).run
       end
@@ -100,9 +101,6 @@ module Rooftop
             create_or_update_prices
           end
           if @options[:import_events]
-            Rooftop.debug_requests=true
-            Spektrix.debug_request=true
-
             fetch_rooftop_and_spektrix_data
             create_or_update_events
           end
