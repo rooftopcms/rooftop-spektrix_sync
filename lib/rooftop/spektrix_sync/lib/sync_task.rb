@@ -59,7 +59,7 @@ module Rooftop
         self.new(starting_at,opts).run
       end
 
-      def self.run_events_import(starting_at=nil, event_id=nil)
+      def self.run_events_import(starting_at=nil, event_id=2052)
         opts = event_id.present? ? {spektrix_event_id: event_id} : {}
         self.run(starting_at, opts)
       end
@@ -100,6 +100,9 @@ module Rooftop
             create_or_update_prices
           end
           if @options[:import_events]
+            Rooftop.debug_requests=true
+            Spektrix.debug_request=true
+
             fetch_rooftop_and_spektrix_data
             create_or_update_events
           end

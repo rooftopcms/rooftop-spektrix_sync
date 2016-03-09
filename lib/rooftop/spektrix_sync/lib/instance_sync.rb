@@ -3,6 +3,7 @@ module Rooftop
     class InstanceSync
 
       def initialize(spektrix_instance, event_sync)
+        @spektrix_instance_statuses = event_sync.spektrix_instance_statuses
         @spektrix_event = event_sync.spektrix_event
         @rooftop_event = event_sync.rooftop_event
         @logger = event_sync.logger
@@ -77,12 +78,14 @@ module Rooftop
       end
 
       def update_availability
+        instance_status = @spektrix_instance_statuses.find{|is| is.instance[:id] == @spektrix_instance.id} || @spektrix_instance.status
+
         availability = {
           availability: {
             starts_at: @spektrix_instance.start.iso8601,
             stops_at: @spektrix_instance.start.advance(seconds: @rooftop_event.meta_attributes[:duration]),
-            seats_capacity: @spektrix_instance.status.capacity,
-            seats_available: @spektrix_instance.status.available
+            seats_capacity: instance_status.capacity,
+            seats_available: instance_status.available
           }
         }
         @rooftop_instance.title = @rooftop_event.title + ": " + @spektrix_instance.start.strftime("%d %b %Y %H:%M")

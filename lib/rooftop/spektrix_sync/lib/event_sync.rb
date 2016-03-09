@@ -2,6 +2,7 @@ module Rooftop
   module SpektrixSync
     class EventSync
       attr_reader :spektrix_event,
+                  :spektrix_instance_statuses,
                   :rooftop_event,
                   :rooftop_price_lists,
                   :logger
@@ -11,6 +12,7 @@ module Rooftop
         @spektrix_events = sync_task.spektrix_events
         @logger = sync_task.logger
         @spektrix_event = spektrix_event
+        @spektrix_instance_statuses = Spektrix::Events::InstanceStatus.where(event_id: @spektrix_event.id, all: true).to_a
         @rooftop_event = @rooftop_events.find {|e| e.meta_attributes[:spektrix_id].try(:to_i) == @spektrix_event.id.to_i}
         @rooftop_price_lists = sync_task.rooftop_price_lists
       end
@@ -82,6 +84,7 @@ module Rooftop
       def sync_instances
         @rooftop_instances = @rooftop_event.instances.to_a
         @spektrix_instances = @spektrix_event.instances.to_a
+
         @spektrix_instances.each_with_index do |instance, i|
           begin
             tries ||= 2
