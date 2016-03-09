@@ -87,17 +87,22 @@ module Rooftop
         @rooftop_instances = @rooftop_event.instances.to_a
         @spektrix_instances = @spektrix_event.instances.to_a
 
+        synced_to_rooftop = [] # array of event instance id's that were updated/created on RT
         @spektrix_instances.each_with_index do |instance, i|
           begin
             tries ||= 2
             instance_sync = Rooftop::SpektrixSync::InstanceSync.new(instance, self)
-            instance_sync.sync
+            synced_to_rooftop << instance_sync.sync
           rescue
             retry unless (tries -= 1 ).zero?
           end
         end
 
-        update_event_metadata unless @rooftop_instances.empty?
+        # if we have any updated event instances, send the POST /events/$event-instance/update_metadata request
+        # to trigger the event meta data update on Rooftop (sets first/last event instance dates on an event to aid in filtering and sorting)
+        if synced_to_rooftop.compact.any?
+          update_event_metadata
+        end
       end
 
       def update_event_metadata
