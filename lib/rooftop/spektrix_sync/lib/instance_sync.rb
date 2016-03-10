@@ -60,9 +60,7 @@ module Rooftop
       end
 
       def update_meta_attributes
-        current_spektrix_hash = @rooftop_instance.meta_attributes['spektrix_hash']
-        @rooftop_instance.meta_attributes = @spektrix_instance.custom_attributes.merge(spektrix_id: @spektrix_instance.id)
-        @rooftop_instance.meta_attributes['spektrix_hash'] = current_spektrix_hash
+        @rooftop_instance.meta_attributes = @spektrix_instance.custom_attributes.merge(spektrix_id: @spektrix_instance.id, spektrix_hash: @rooftop_instance.meta_attributes.try(:[], :spektrix_hash))
       end
 
       def update_on_sale
