@@ -33,6 +33,8 @@ module Rooftop
           if @rooftop_instance.save!
             @logger.debug("#{instance_updated ? "Updated" : "Created"} Rooftop instance #{@rooftop_instance.id}")
             return @rooftop_instance.id
+          else
+            @logger.debug("\n\nCouldn't save instance\n\n")
           end
         else
           @logger.debug("Skipping event instance save")
@@ -52,7 +54,7 @@ module Rooftop
       end
 
       def find_rooftop_instance_by_spektrix_id(spektrix_id)
-        @rooftop_event.instances.to_a.find {|i| i.meta_attributes[:spektrix_id] == spektrix_id }
+        @rooftop_event.embedded_instances.to_a.find {|i| i.meta_attributes[:spektrix_id] == spektrix_id }
       end
 
       def update_price

@@ -11,6 +11,9 @@ module Rooftop
                   :options
 
       def initialize(starting_at, opts={})
+        Rooftop.debug_requests=true
+        Spektrix.debug_request=true
+
         begin
           Rooftop.preview = true
           @starting_at = starting_at || DateTime.now
@@ -42,7 +45,7 @@ module Rooftop
         end
 
         @logger.debug("Fetching all Rooftop events")
-        @rooftop_events = Rooftop::Events::Event.all.to_a
+        @rooftop_events = Rooftop::Events::Event.all(include_embedded_resources: true, no_filter: [:include_embedded_resources]).to_a
 
         @logger.debug("Fetching all Rooftop Price lists")
         @rooftop_price_lists = Rooftop::Events::PriceList.all.to_a
