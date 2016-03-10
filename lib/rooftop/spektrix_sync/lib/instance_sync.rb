@@ -8,7 +8,7 @@ module Rooftop
         @rooftop_event = event_sync.rooftop_event
         @logger = event_sync.logger
         @spektrix_instance = spektrix_instance
-        @rooftop_instance = find_rooftop_instance_by_spektrix_id(@spektrix_instance.id) || @rooftop_event.instances.build(status: nil)
+        @rooftop_instance = find_rooftop_instance_by_spektrix_id(@spektrix_instance.id) || @rooftop_event.instances.build(status: nil, meta_attributes: {})
         @rooftop_price_lists = event_sync.rooftop_price_lists
       end
 
