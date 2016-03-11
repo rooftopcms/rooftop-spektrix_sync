@@ -45,7 +45,7 @@ module Rooftop
         end
 
         @logger.debug("Fetching all Rooftop events")
-        @rooftop_events = Rooftop::Events::Event.all(include_embedded_resources: true, no_filter: [:include_embedded_resources]).to_a
+        @rooftop_events = Rooftop::Events::Event.all(include_embedded_resources: true, instances_per_page: -1, no_filter: [:instances_per_page, :include_embedded_resources]).to_a
 
         @logger.debug("Fetching all Rooftop Price lists")
         @rooftop_price_lists = Rooftop::Events::PriceList.all.to_a
