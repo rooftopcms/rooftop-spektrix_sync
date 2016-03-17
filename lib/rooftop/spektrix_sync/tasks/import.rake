@@ -23,6 +23,11 @@ namespace :rooftop do
       Rooftop::SpektrixSync::SyncTask.run_prices_import(@since)
     end
 
+    desc "Sync specific event"
+    task :sync_event, [:spektrix_event_id, :since, :logger_path] => [:environment, :prepare] do |task, args|
+      Rooftop::SpektrixSync::SyncTask.run_events_import(@since, args[:spektrix_event_id])
+    end
+
 
   end
 end
