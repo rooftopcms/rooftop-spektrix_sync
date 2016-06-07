@@ -11,8 +11,9 @@ module Rooftop
                   :options
 
       def initialize(starting_at, opts={})
-        Rooftop.debug_requests=true
-        Spektrix.debug_request=true
+        if defined?(Rooftop::Rails)
+          Rooftop::Rails.configuration.perform_object_caching = false
+        end
 
         begin
           Rooftop.preview = true
