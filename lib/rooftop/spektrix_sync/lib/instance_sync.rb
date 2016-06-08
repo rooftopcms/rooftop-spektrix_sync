@@ -51,7 +51,7 @@ module Rooftop
 
       def generate_spektrix_hash(event_instance)
         instance_status = @spektrix_instance_statuses.find{|is| is.instance[:id] == @spektrix_instance.id} || @spektrix_instance.status
-        Digest::MD5.hexdigest(event_instance.attributes.merge(instance_status.attributes).to_s)
+        Digest::MD5.hexdigest(event_instance.attributes.to_s + instance_status.attributes.to_s)
       end
 
       def find_rooftop_instance_by_spektrix_id(spektrix_id)
