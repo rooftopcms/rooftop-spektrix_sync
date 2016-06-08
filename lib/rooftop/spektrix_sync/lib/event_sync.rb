@@ -43,7 +43,9 @@ module Rooftop
         if event_requires_sync?
           @rooftop_event.meta_attributes[:spektrix_hash] = generate_spektrix_hash(@spektrix_event)
           rooftop_event_title = @rooftop_event.title
-          @rooftop_event.title = nil #to ensure we don't overwrite an updated one in RT by mistake
+          if @rooftop_event.persisted?
+            @rooftop_event.title = nil #to ensure we don't overwrite an updated one in RT by mistake
+          end
 
           if @rooftop_event.save!
             @logger.debug("Saved event: #{rooftop_event_title} #{@rooftop_event.id}")
