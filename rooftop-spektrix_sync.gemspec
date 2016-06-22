@@ -25,5 +25,6 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'activesupport'
   spec.add_dependency 'require_all'
   spec.add_dependency "rooftop-events"
+  spec.add_dependency 'rooftop', '~> 0.0.7'
   spec.add_dependency "spektrix"
 end
