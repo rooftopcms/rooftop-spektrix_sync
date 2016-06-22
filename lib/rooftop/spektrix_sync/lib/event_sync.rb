@@ -33,6 +33,9 @@ module Rooftop
       def sync
         update_meta_attributes
         update_on_sale
+        if @rooftop_event.persisted?
+          @rooftop_event.title = nil #to ensure we don't overwrite an updated one in RT by mistake
+        end
         if @rooftop_event.save!
           @logger.debug("Saved event: #{@rooftop_event.title} #{@rooftop_event.id}")
           sync_instances
@@ -53,7 +56,7 @@ module Rooftop
         if SpektrixSync.configuration.present? && SpektrixSync.configuration[:on_sale_if_new_event]
           @rooftop_event.status = @spektrix_event.is_on_sale ? 'publish' : 'draft'
         else
-          @rooftop_event.status ||= "draft"
+          @rooftop_event.restore_status! #don't send status with the request
         end
       end
 
