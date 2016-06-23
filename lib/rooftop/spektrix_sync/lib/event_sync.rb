@@ -34,8 +34,15 @@ module Rooftop
         update_meta_attributes
         update_on_sale
         if @rooftop_event.persisted?
-          @rooftop_event.title = nil #to ensure we don't overwrite an updated one in RT by mistake
+          # Ensure we're not overwriting newer stuff in RT with older stuff from this sync by
+          # removing the title and content if this is a PUT request (i.e. it already exists in RT)
+          @rooftop_event.restore_title!
+          @rooftop_event.restore_content!
+          @rooftop_event.restore_slug!
+          @rooftop_event.restore_link!
+          @rooftop_event.restore_event_instance_availabilities!
         end
+
         if @rooftop_event.save!
           @logger.debug("Saved event: #{@rooftop_event.title} #{@rooftop_event.id}")
           sync_instances
