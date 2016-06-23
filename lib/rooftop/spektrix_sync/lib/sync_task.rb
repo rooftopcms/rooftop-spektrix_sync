@@ -13,6 +13,9 @@ module Rooftop
       def initialize(starting_at, opts={})
         begin
           Rooftop.preview = true
+          if defined?(Rooftop::Rails)
+            Rooftop::Rails.configuration.perform_object_caching = false
+          end
           @starting_at = starting_at || DateTime.now
           @logger = SpektrixSync.logger || Logger.new(STDOUT)
           default_opts = {
