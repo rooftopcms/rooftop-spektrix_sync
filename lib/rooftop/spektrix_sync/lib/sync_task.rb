@@ -10,6 +10,8 @@ module Rooftop
                   :rooftop_price_bands,
                   :options
 
+      PIDPATH = "/tmp/rooftop-spektrix-sync.pid"
+
       def initialize(starting_at, opts={})
         begin
           Rooftop.preview = true
@@ -32,7 +34,6 @@ module Rooftop
         rescue => e
           @logger.error("Couldn't start sync: #{e}")
         end
-
       end
 
       def fetch_rooftop_and_spektrix_data
@@ -56,7 +57,18 @@ module Rooftop
 
 
       def self.run(starting_at=nil, opts={})
+        sync_pid = Process.get_pid(Rooftop::SpektrixSync::SyncTask::PIDPATH)
+
+        if sync_pid && Process.exists?(sync_pid.to_i)
+          raise 'Rooftop::SpektrixSync::SyncRunning'
+        end
+
+        # if we're here, we can create a new pidfile and start the sync
+        Process.create_pid(Rooftop::SpektrixSync::SyncTask::PIDPATH)
         self.new(starting_at,opts).run
+
+        # remove the pid
+        Process.remove_pidfile(Rooftop::SpektrixSync::SyncTask::PIDPATH)
       end
 
       def self.run_events_import(starting_at=nil, event_id=nil)
