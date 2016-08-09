@@ -25,7 +25,8 @@ module Rooftop
             import_ticket_types: false,
             import_prices: false,
             import_events: true,
-            delete_orphan_events: false
+            delete_orphan_events: false,
+            accept_empty_rooftop_events: false
           }
           @options = default_opts.merge!(opts)
           @logger.debug("*************************************************************************")
@@ -44,6 +45,9 @@ module Rooftop
         end
         @logger.debug("Fetching all Rooftop events")
         @rooftop_events = Rooftop::Events::Event.all.to_a
+        unless @options[:accept_empty_rooftop_events]
+          raise StandardError, "Rooftop returned an empty set of events which is probably wrong" if @rooftop_events.empty?
+        end
         @logger.debug("Fetching all Spektrix price lists")
         @spektrix_price_lists = @spektrix_price_lists.present? ? @spektrix_price_lists : Spektrix::Tickets::PriceList.all.to_a
         @logger.debug("Fetching all Rooftop Price lists")
