@@ -10,7 +10,8 @@ module Rooftop
                   :rooftop_price_bands,
                   :options
 
-      PIDPATH = "/tmp/rooftop-spektrix-sync.pid"
+      PIDFILE = ARGV.find{|a| a=~/pidname=[^$]+/}.try(:split, '=').try(:last) || 'sync'
+      PIDPATH = "/tmp/rooftop-spektrix-#{PIDFILE}.pid"
 
       def initialize(starting_at, opts={})
         begin
