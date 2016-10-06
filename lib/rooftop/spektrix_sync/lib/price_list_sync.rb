@@ -22,6 +22,10 @@ module Rooftop
         # begin
           @spektrix_price_lists.each do |spektrix_price_list|
             # Don't bother syncing a price list where none of the prices have bands.
+            if spektrix_price_list.prices.nil?
+              @logger.warn("Spektrix price list ID #{spektrix_price_list.id} has no prices at all")
+              next
+            end
             if spektrix_price_list.prices.select {|p| !p.band.nil?}.empty?
               @logger.warn("Spektrix price list ID #{spektrix_price_list.id} has prices with missing bands.")
             end
@@ -58,10 +62,22 @@ module Rooftop
               new_price.assign_attributes(current_rooftop_price.attributes)
             end
 
+            ticket_type_id = find_rooftop_ticket_type(spektrix_price).try(:id)
+            price_band_id = find_rooftop_price_band(spektrix_price).try(:id)
+            if ticket_type_id.nil?
+              @logger.warn("Ticket type for spektrix price #{spektrix_price.price} with ticket type #{spektrix_price.ticket_type.name} is nil")
+              next
+            end
+
+            if price_band_id.nil?
+              @logger.warn("Price band for spektrix price #{spektrix_price.price} with ticket type #{spektrix_price.ticket_type.name} is nil")
+              next
+            end
+
             new_price.meta_attributes = {
               is_band_default: (spektrix_price.is_band_default == "true"),
-              ticket_type_id: find_rooftop_ticket_type(spektrix_price).id,
-              price_band_id: find_rooftop_price_band(spektrix_price).id,
+              ticket_type_id: ticket_type_id,
+              price_band_id: price_band_id,
               ticket_price: spektrix_price.price.to_f
             }
 
