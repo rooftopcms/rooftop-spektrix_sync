@@ -13,6 +13,7 @@ module Rooftop
         @spektrix_event = spektrix_event
         @rooftop_event = @rooftop_events.find {|e| e.meta_attributes[:spektrix_id].try(:to_i) == @spektrix_event.id.to_i}
         @rooftop_price_lists = sync_task.rooftop_price_lists
+        @sync_task = sync_task
       end
 
       def sync_to_rooftop
@@ -22,7 +23,7 @@ module Rooftop
             title: @spektrix_event.title,
             content: {
               basic: {
-                content: sync_task.options[:import_spektrix_description] ? @spektrix_event.description : ""
+                content: @sync_task.options[:import_spektrix_description] ? @spektrix_event.description : ""
               }
             },
             meta_attributes: {},
