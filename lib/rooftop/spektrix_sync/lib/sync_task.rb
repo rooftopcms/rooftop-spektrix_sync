@@ -27,7 +27,8 @@ module Rooftop
             import_prices: false,
             import_events: true,
             delete_orphan_events: false,
-            accept_empty_rooftop_events: false
+            accept_empty_rooftop_events: false,
+            import_spektrix_description: true
           }
           @options = default_opts.merge!(opts)
           @logger.debug("*************************************************************************")
@@ -76,29 +77,29 @@ module Rooftop
         Process.remove_pidfile(Rooftop::SpektrixSync::SyncTask::PIDPATH)
       end
 
-      def self.run_events_import(starting_at=nil, event_id=nil)
-        opts = event_id.present? ? {spektrix_event_id: event_id} : {}
+      def self.run_events_import(starting_at=nil, event_id=nil, opts={})
+        opts = event_id.present? ? opts.merge({spektrix_event_id: event_id}) : opts
         self.run(starting_at, opts)
       end
 
-      def self.run_full_import(starting_at=nil)
+      def self.run_full_import(starting_at=nil, opts={})
         self.run(starting_at, {
           import_price_bands: true,
           import_ticket_types: true,
           import_prices: true,
           import_events: true,
           delete_orphan_events: false
-        })
+        }.merge(opts))
       end
 
-      def self.run_prices_import(starting_at=nil)
+      def self.run_prices_import(starting_at=nil, opts={})
         self.run(starting_at, {
           import_price_bands: true,
           import_ticket_types: true,
           import_prices: true,
           import_events: false,
           delete_orphan_events: false
-        })
+        }.merge(opts))
       end
 
 

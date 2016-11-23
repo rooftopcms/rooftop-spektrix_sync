@@ -20,7 +20,11 @@ module Rooftop
           # find the event
           @rooftop_event ||= Rooftop::Events::Event.new({
             title: @spektrix_event.title,
-            content: {basic: {content: @spektrix_event.description}},
+            content: {
+              basic: {
+                content: sync_task.options[:import_spektrix_description] ? @spektrix_event.description : ""
+              }
+            },
             meta_attributes: {},
             status: nil
           })
