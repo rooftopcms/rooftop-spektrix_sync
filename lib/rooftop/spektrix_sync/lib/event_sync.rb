@@ -2,6 +2,7 @@ module Rooftop
   module SpektrixSync
     class EventSync
       attr_reader :spektrix_event,
+                  :spektrix_instance_statuses,
                   :rooftop_event,
                   :rooftop_price_lists,
                   :logger
@@ -14,6 +15,8 @@ module Rooftop
         @rooftop_event = @rooftop_events.find {|e| e.meta_attributes[:spektrix_id].try(:to_i) == @spektrix_event.id.to_i}
         @rooftop_price_lists = sync_task.rooftop_price_lists
         @sync_task = sync_task
+        @logger.debug("Fetching all instance statuses for event")
+        @spektrix_instance_statuses = Spektrix::Events::InstanceStatus.where(event_id: @spektrix_event.id, all: true).to_a
       end
 
       def sync_to_rooftop
@@ -37,24 +40,41 @@ module Rooftop
 
       def sync
         update_meta_attributes
+
         update_on_sale
-        if @rooftop_event.persisted?
-          # Ensure we're not overwriting newer stuff in RT with older stuff from this sync by
-          # removing the title and content if this is a PUT request (i.e. it already exists in RT)
-          @rooftop_event.restore_title!
-          @rooftop_event.restore_content!
-          @rooftop_event.restore_slug!
-          @rooftop_event.restore_link!
-          @rooftop_event.restore_event_instance_availabilities!
+
+        sync_event_instances = true
+
+        if event_requires_sync?
+          @rooftop_event.meta_attributes[:spektrix_hash] = generate_spektrix_hash(@spektrix_event)
+          rooftop_event_title = @rooftop_event.title
+          if @rooftop_event.persisted?
+            @rooftop_event.title = nil #to ensure we don't overwrite an updated one in RT by mistake
+          end
+
+          if @rooftop_event.save!
+            @logger.debug("Saved event: #{rooftop_event_title} #{@rooftop_event.id}")
+          else
+            sync_event_instances = false
+          end
+        else
+          @logger.debug("Skipping event update")
         end
 
-        if @rooftop_event.save!
-          @logger.debug("Saved event: #{@rooftop_event.title} #{@rooftop_event.id}")
-          sync_instances
-        end
+        sync_instances if sync_event_instances
       end
 
       private
+      def event_requires_sync?
+        rooftop_event_hash = @rooftop_event.meta_attributes['spektrix_hash']
+
+        @rooftop_event.id.nil? || !rooftop_event_hash || rooftop_event_hash != generate_spektrix_hash(@spektrix_event)
+      end
+
+      def generate_spektrix_hash(event)
+        Digest::MD5.hexdigest(event.attributes.to_s)
+      end
+
       def update_meta_attributes
         @rooftop_event.meta_attributes ||= {}
         @rooftop_event.meta_attributes[:spektrix_id] = @spektrix_event.id
@@ -73,19 +93,27 @@ module Rooftop
       end
 
       def sync_instances
-        @rooftop_instances = @rooftop_event.instances.to_a
+        @logger.debug("\tChecking #{@rooftop_event.embedded_instances.to_a.size} instances..")
+        @rooftop_instances = @rooftop_event.embedded_instances.to_a
         @spektrix_instances = @spektrix_event.instances.to_a
+
+        synced_to_rooftop = [] # array of event instance id's that were updated/created on RT
         @spektrix_instances.each_with_index do |instance, i|
           begin
             tries ||= 2
             instance_sync = Rooftop::SpektrixSync::InstanceSync.new(instance, self)
-            instance_sync.sync
-          rescue
+            synced_to_rooftop << instance_sync.sync
+          rescue => e
+            Rails.logger.info("\n\n#{e}\n\n")
             retry unless (tries -= 1 ).zero?
           end
         end
 
-        update_event_metadata unless @rooftop_instances.empty?
+        # if we have any updated event instances, send the POST /events/$event-instance/update_metadata request
+        # to trigger the event meta data update on Rooftop (sets first/last event instance dates on an event to aid in filtering and sorting)
+        if synced_to_rooftop.compact.any?
+          update_event_metadata
+        end
       end
 
       def update_event_metadata

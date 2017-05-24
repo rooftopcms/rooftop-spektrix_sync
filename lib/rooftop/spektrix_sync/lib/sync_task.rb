@@ -14,6 +14,10 @@ module Rooftop
       PIDPATH = "/tmp/rooftop-spektrix-#{PIDFILE}.pid"
 
       def initialize(starting_at, opts={})
+        if defined?(Rooftop::Rails)
+          Rooftop::Rails.configuration.perform_object_caching = false
+        end
+
         begin
           Rooftop.preview = true
           if defined?(Rooftop::Rails)
@@ -40,11 +44,14 @@ module Rooftop
       end
 
       def fetch_rooftop_and_spektrix_data
-        @logger.debug("Fetching all Spektrix events")
         @spektrix_events = @spektrix_events.present? ? @spektrix_events : Spektrix::Events::Event.all(instance_start_from: @starting_at.iso8601).to_a
         if @options[:spektrix_event_id]
+          @logger.debug("Selecting single Spektrix event")
           @spektrix_events = @spektrix_events.select {|e| e.id == @options[:spektrix_event_id].to_s}
+        else
+          @logger.debug("Fetching all Spektrix events")
         end
+
         @logger.debug("Fetching all Rooftop events")
         @rooftop_events = Rooftop::Events::Event.all.to_a
         unless @options[:accept_empty_rooftop_events]
@@ -54,13 +61,16 @@ module Rooftop
         @spektrix_price_lists = @spektrix_price_lists.present? ? @spektrix_price_lists : Spektrix::Tickets::PriceList.all.to_a
         @logger.debug("Fetching all Rooftop Price lists")
         @rooftop_price_lists = Rooftop::Events::PriceList.all.to_a
-        @logger.debug("Fetching all Rooftop ticket types")
-        @rooftop_ticket_types = Rooftop::Events::TicketType.all.to_a
-        @logger.debug("Fetching all Rooftop price bands")
-        @rooftop_price_bands = Rooftop::Events::PriceBand.all.to_a
+
+        if @options[:import_price_bands] || @options[:import_ticket_types] || @options[:import_prices]
+          @logger.debug("Fetching all Spektrix price lists")
+          @spektrix_price_lists = @spektrix_price_lists.present? ? @spektrix_price_lists : Spektrix::Tickets::PriceList.all.to_a
+          @logger.debug("Fetching all Rooftop ticket types")
+          @rooftop_ticket_types = Rooftop::Events::TicketType.all.to_a
+          @logger.debug("Fetching all Rooftop price bands")
+          @rooftop_price_bands = Rooftop::Events::PriceBand.all.to_a
+        end
       end
-
-
 
       def self.run(starting_at=nil, opts={})
         sync_pid = Process.get_pid(Rooftop::SpektrixSync::SyncTask::PIDPATH)
