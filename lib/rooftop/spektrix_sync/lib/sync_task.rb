@@ -19,7 +19,7 @@ module Rooftop
         end
 
         begin
-          Rooftop.preview = true
+          Rooftop.include_drafts = true
           if defined?(Rooftop::Rails)
             Rooftop::Rails.configuration.perform_object_caching = false
           end

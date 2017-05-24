@@ -93,12 +93,13 @@ module Rooftop
       end
 
       def sync_instances
-        @logger.debug("\tChecking #{@rooftop_event.embedded_instances.to_a.size} instances..")
-        @rooftop_instances = @rooftop_event.embedded_instances.to_a
+        @rooftop_instances = @rooftop_event.instances.to_a
         @spektrix_instances = @spektrix_event.instances.to_a
+        @logger.debug("\tChecking #{@rooftop_instances.size} instances..")
 
         synced_to_rooftop = [] # array of event instance id's that were updated/created on RT
         @spektrix_instances.each_with_index do |instance, i|
+          @logger.debug("Instance #{instance.id}")
           begin
             tries ||= 2
             instance_sync = Rooftop::SpektrixSync::InstanceSync.new(instance, self)

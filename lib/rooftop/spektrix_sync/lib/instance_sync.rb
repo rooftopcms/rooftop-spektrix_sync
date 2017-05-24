@@ -37,7 +37,7 @@ module Rooftop
             @logger.debug("\n\nCouldn't save instance\n\n")
           end
         else
-          @logger.debug("Skipping event instance save")
+          @logger.debug("Skipping event instance save - computed hash matched")
           return nil
         end
       end
@@ -55,7 +55,7 @@ module Rooftop
       end
 
       def find_rooftop_instance_by_spektrix_id(spektrix_id)
-        @rooftop_event.embedded_instances.to_a.find {|i| i.meta_attributes[:spektrix_id] == spektrix_id }
+        @rooftop_event.instances.to_a.find {|i| i.meta_attributes[:spektrix_id] == spektrix_id }
       end
 
       def update_price
