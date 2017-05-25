@@ -40,7 +40,6 @@ module Rooftop
 
       def sync
         update_meta_attributes
-
         update_on_sale
 
         sync_event_instances = true
@@ -48,12 +47,20 @@ module Rooftop
         if event_requires_sync?
           @rooftop_event.meta_attributes[:spektrix_hash] = generate_spektrix_hash(@spektrix_event)
           rooftop_event_title = @rooftop_event.title
+
+          new_event = !@rooftop_event.persisted?
           if @rooftop_event.persisted?
-            @rooftop_event.title = nil #to ensure we don't overwrite an updated one in RT by mistake
+            # Ensure we're not overwriting newer stuff in RT with older stuff from this sync by
+            # removing the title and content if this is a PUT request (i.e. it already exists in RT)
+            @rooftop_event.restore_title!
+            @rooftop_event.restore_content!
+            @rooftop_event.restore_slug!
+            @rooftop_event.restore_link!
+            @rooftop_event.restore_event_instance_availabilities!
           end
 
           if @rooftop_event.save!
-            @logger.debug("Saved event: #{rooftop_event_title} #{@rooftop_event.id}")
+            @logger.debug("#{new_event ? 'Created' : 'Saved'} event: #{rooftop_event_title} #{@rooftop_event.id}")
           else
             sync_event_instances = false
           end
