@@ -112,7 +112,10 @@ module Rooftop
         delete_instance_ids           = rooftop_instance_spektrix_ids - spektrix_instance_ids
         delete_instances              = @rooftop_instances.select{|i| delete_instance_ids.include?(i.meta_attributes[:spektrix_id])}
         # before we can call .destroy on an instance, we need to mutate the object so it has an :event_id to hit the proper destroy method endpoint...
-        delete_instances.each{|instance| instance.tap{|i| i.event_id = @rooftop_event.meta_attributes[:spektrix_id]}.destroy}
+        delete_instances.each do |instance|
+          @logger.debug("Deleting Rooftop Instance #{instance.id}")
+          instance.tap{|i| i.event_id = @rooftop_event.meta_attributes[:spektrix_id]}.destroy
+        end
 
         @spektrix_instances.each_with_index do |instance, i|
           @logger.debug("Instance #{instance.id}")
