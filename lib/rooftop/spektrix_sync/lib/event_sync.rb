@@ -105,6 +105,15 @@ module Rooftop
         @logger.debug("\tChecking #{@rooftop_instances.size} instances..")
 
         synced_to_rooftop = [] # array of event instance id's that were updated/created on RT
+
+        # delete any RT instances that aren't included in the set of spektrix event instances
+        rooftop_instance_spektrix_ids = @rooftop_instances.collect{|i| i.meta_attributes[:spektrix_id]}.compact
+        spektrix_instance_ids         = @spektrix_instances.collect(&:id)
+        delete_instance_ids           = rooftop_instance_spektrix_ids - spektrix_instance_ids
+        delete_instances              = @rooftop_instances.select{|i| delete_instance_ids.include?(i.meta_attributes[:spektrix_id])}
+        # before we can call .destroy on an instance, we need to mutate the object so it has an :event_id to hit the proper destroy method endpoint...
+        delete_instances.each{|instance| instance.tap{|i| i.event_id = @rooftop_event.meta_attributes[:spektrix_id]}.destroy}
+
         @spektrix_instances.each_with_index do |instance, i|
           @logger.debug("Instance #{instance.id}")
           begin
