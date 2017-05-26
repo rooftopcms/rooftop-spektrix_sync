@@ -1,5 +1,5 @@
 module Rooftop
   module SpektrixSync
-    VERSION = "0.0.2.10"
+    VERSION = "0.0.3.1"
   end
 end
