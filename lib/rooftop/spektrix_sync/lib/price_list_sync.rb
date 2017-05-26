@@ -23,11 +23,11 @@ module Rooftop
           @spektrix_price_lists.each do |spektrix_price_list|
             # Don't bother syncing a price list where none of the prices have bands.
             if spektrix_price_list.prices.nil?
-              @logger.error("Spektrix price list ID #{spektrix_price_list.id} has no prices at all")
+              @logger.error("[spektrix] Spektrix price list ID #{spektrix_price_list.id} has no prices at all")
               next
             end
             if spektrix_price_list.prices.select {|p| !p.band.nil?}.empty?
-              @logger.error("Spektrix price list ID #{spektrix_price_list.id} has prices with missing bands.")
+              @logger.error("[spektrix] Spektrix price list ID #{spektrix_price_list.id} has prices with missing bands.")
             end
 
             # find or create a price list
@@ -37,7 +37,7 @@ module Rooftop
             new_price_list = @rooftop_price_list.new?
             # save the price list to rooftop
             if @rooftop_price_list.save!
-              @logger.info("#{new_price_list ? "Created" : "Updated"} price list #{spektrix_price_list.id}")
+              @logger.info("[spektrix] #{new_price_list ? "Created" : "Updated"} price list #{spektrix_price_list.id}")
               sync_prices(spektrix_price_list, @rooftop_price_list)
             end
           end
@@ -49,10 +49,10 @@ module Rooftop
       def sync_prices(spektrix_price_list, rooftop_price_list)
         # begin
           spektrix_price_list.prices.each_with_index do |spektrix_price, i |
-            @logger.info("syncing price #{i+1} / #{spektrix_price_list.prices.count}")
+            @logger.info("[spektrix] syncing price #{i+1} / #{spektrix_price_list.prices.count}")
             # skip ones without a band
             if spektrix_price.band.nil?
-              @logger.error("Spektrix price list ID: #{spektrix_price_list.id}: Price #{spektrix_price.price} with ticket type #{spektrix_price.ticket_type.name} does not have a band")
+              @logger.error("[spektrix] Spektrix price list ID: #{spektrix_price_list.id}: Price #{spektrix_price.price} with ticket type #{spektrix_price.ticket_type.name} does not have a band")
               next
             end
             current_rooftop_price = find_rooftop_price(rooftop_price_list, spektrix_price)
@@ -65,12 +65,12 @@ module Rooftop
             ticket_type_id = find_rooftop_ticket_type(spektrix_price).try(:id)
             price_band_id = find_rooftop_price_band(spektrix_price).try(:id)
             if ticket_type_id.nil?
-              @logger.error("Ticket type for spektrix price #{spektrix_price.price} with ticket type #{spektrix_price.ticket_type.name} is nil")
+              @logger.error("[spektrix] Ticket type for spektrix price #{spektrix_price.price} with ticket type #{spektrix_price.ticket_type.name} is nil")
               next
             end
 
             if price_band_id.nil?
-              @logger.error("Price band for spektrix price #{spektrix_price.price} with ticket type #{spektrix_price.ticket_type.name} is nil")
+              @logger.error("[spektrix] Price band for spektrix price #{spektrix_price.price} with ticket type #{spektrix_price.ticket_type.name} is nil")
               next
             end
 
@@ -83,7 +83,7 @@ module Rooftop
 
             new_price.title = "#{spektrix_price.band.name} (£#{new_price.meta_attributes[:ticket_price]})"
             if new_price.save!
-              @logger.error("Spektrix price list ID: #{spektrix_price_list.id}: Saved price £#{new_price.meta_attributes[:ticket_price]} with ticket type #{spektrix_price.ticket_type.name} for price band #{spektrix_price.band.name}")
+              @logger.error("[spektrix] Spektrix price list ID: #{spektrix_price_list.id}: Saved price £#{new_price.meta_attributes[:ticket_price]} with ticket type #{spektrix_price.ticket_type.name} for price band #{spektrix_price.band.name}")
             end
           end
         # rescue => e
@@ -101,11 +101,11 @@ module Rooftop
           end
           Rooftop::Events::PriceList.where(post__in: rooftop_ids_to_remove).each do |pricelist|
             if pricelist.destroy
-              @logger.info("Removed rooftop price list #{id} which didn't exist in spektrix")
+              @logger.info("[spektrix] Removed rooftop price list #{id} which didn't exist in spektrix")
             end
           end
         rescue => e
-          @logger.fatal(e.to_s)
+          @logger.fatal("[spektrix] #{e}")
         end
       end
 

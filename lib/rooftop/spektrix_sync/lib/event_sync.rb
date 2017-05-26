@@ -15,7 +15,7 @@ module Rooftop
         @rooftop_event = @rooftop_events.find {|e| e.meta_attributes[:spektrix_id].try(:to_i) == @spektrix_event.id.to_i}
         @rooftop_price_lists = sync_task.rooftop_price_lists
         @sync_task = sync_task
-        @logger.info("Fetching all instance statuses for event")
+        @logger.info("[spektrix]  Fetching all instance statuses for event")
         @spektrix_instance_statuses = Spektrix::Events::InstanceStatus.where(event_id: @spektrix_event.id, all: true).to_a
       end
 
@@ -34,7 +34,7 @@ module Rooftop
           })
           sync()
         rescue => e
-          @logger.fatal(e.to_s)
+          @logger.fatal("[spektrix] #{e}")
         end
       end
 
@@ -60,12 +60,12 @@ module Rooftop
           end
 
           if @rooftop_event.save!
-            @logger.info("#{new_event ? 'Created' : 'Saved'} event: #{rooftop_event_title} #{@rooftop_event.id}")
+            @logger.info("[spektrix]  #{new_event ? 'Created' : 'Saved'} event: #{rooftop_event_title} #{@rooftop_event.id}")
           else
             sync_event_instances = false
           end
         else
-          @logger.info("Skipping event update")
+          @logger.info("[spektrix]  Skipping event update")
         end
 
         sync_instances if sync_event_instances
@@ -102,7 +102,7 @@ module Rooftop
       def sync_instances
         @rooftop_instances = @rooftop_event.instances.to_a
         @spektrix_instances = @spektrix_event.instances.to_a
-        @logger.info("\tChecking #{@rooftop_instances.size} instances..")
+        @logger.info("[spektrix]  Checking #{@rooftop_instances.size} instances..")
 
         synced_to_rooftop = [] # array of event instance id's that were updated/created on RT
 
@@ -113,21 +113,21 @@ module Rooftop
         delete_instances              = @rooftop_instances.select{|i| delete_instance_ids.include?(i.meta_attributes[:spektrix_id])}
         # before we can call .destroy on an instance, we need to mutate the object so it has an :event_id to hit the proper destroy method endpoint...
         delete_instances.each do |instance|
-          @logger.info("Deleting Rooftop Instance #{instance.id}")
+          @logger.info("[spektrix]  Deleting Rooftop Instance #{instance.id}")
           instance.tap{|i| i.event_id = @rooftop_event.meta_attributes[:spektrix_id]}.destroy
         end
 
         @spektrix_instances.each_with_index do |instance, i|
-          @logger.info("Instance #{instance.id}")
+          @logger.info("[spektrix] Instance #{instance.id}")
           begin
             tries ||= 2
             instance_sync = Rooftop::SpektrixSync::InstanceSync.new(instance, self)
             synced_to_rooftop << instance_sync.sync
           rescue => e
             if (tries -= 1).zero?
-              @logger.fatal("Not retrying... #{e}")
+              @logger.fatal("[spektrix] Not retrying... #{e}")
             else
-              @logger.warn("Retrying... #{e}")
+              @logger.warn("[spektrix] Retrying... #{e}")
               retry
             end
           end
@@ -141,7 +141,7 @@ module Rooftop
       end
 
       def update_event_metadata
-        @logger.info("Saved event instances. Updating event metadata")
+        @logger.info("[spektrix] Saved event instances. Updating event metadata")
         Rooftop::Events::Event.post("#{@rooftop_event.class.collection_path}/#{@rooftop_event.id}/update_metadata")
       end
     end

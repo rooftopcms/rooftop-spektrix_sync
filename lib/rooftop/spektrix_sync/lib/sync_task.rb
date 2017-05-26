@@ -35,40 +35,38 @@ module Rooftop
             import_spektrix_description: true
           }
           @options = default_opts.merge!(opts)
-          @logger.info("*************************************************************************")
-          @logger.info("Running with options: #{@options.select {|k,v| k if v}.keys.join(", ")}")
-          @logger.info("*************************************************************************")
+          @logger.info("[spektrix] Running with options: #{@options.select {|k,v| k if v}.keys.join("[spektrix] , ")}")
         rescue => e
-          @logger.fatal("Couldn't start sync: #{e}")
+          @logger.fatal("[spektrix] Couldn't start sync: #{e}")
         end
       end
 
       def fetch_rooftop_and_spektrix_data
         @spektrix_events = @spektrix_events.present? ? @spektrix_events : Spektrix::Events::Event.all(instance_start_from: @starting_at.iso8601).to_a
         if @options[:spektrix_event_id]
-          @logger.info("Selecting single Spektrix event")
+          @logger.info("[spektrix] Selecting single Spektrix event")
           @spektrix_events = @spektrix_events.select {|e| e.id == @options[:spektrix_event_id].to_s}
         else
-          @logger.info("Fetching all Spektrix events")
+          @logger.info("[spektrix] Fetching all Spektrix events")
         end
 
-        @logger.info("Fetching all Rooftop events")
+        @logger.info("[spektrix] Fetching all Rooftop events")
         @rooftop_events = Rooftop::Events::Event.all.to_a
         unless @options[:accept_empty_rooftop_events]
-          @logger.info("No Rooftop events")
+          @logger.info("[spektrix] No Rooftop events")
           raise StandardError, "Rooftop returned an empty set of events which is probably wrong" if @rooftop_events.empty?
         end
-        @logger.info("Fetching all Spektrix price lists")
+        @logger.info("[spektrix] Fetching all Spektrix price lists")
         @spektrix_price_lists = @spektrix_price_lists.present? ? @spektrix_price_lists : Spektrix::Tickets::PriceList.all.to_a
-        @logger.info("Fetching all Rooftop Price lists")
+        @logger.info("[spektrix] Fetching all Rooftop Price lists")
         @rooftop_price_lists = Rooftop::Events::PriceList.all.to_a
 
         if @options[:import_price_bands] || @options[:import_ticket_types] || @options[:import_prices]
-          @logger.info("Fetching all Spektrix price lists")
+          @logger.info("[spektrix] Fetching all Spektrix price lists")
           @spektrix_price_lists = @spektrix_price_lists.present? ? @spektrix_price_lists : Spektrix::Tickets::PriceList.all.to_a
-          @logger.info("Fetching all Rooftop ticket types")
+          @logger.info("[spektrix] Fetching all Rooftop ticket types")
           @rooftop_ticket_types = Rooftop::Events::TicketType.all.to_a
-          @logger.info("Fetching all Rooftop price bands")
+          @logger.info("[spektrix] Fetching all Rooftop price bands")
           @rooftop_price_bands = Rooftop::Events::PriceBand.all.to_a
         end
       end
@@ -138,7 +136,7 @@ module Rooftop
           #   delete_orphan_spektrix_events
           # end
         rescue => e
-          @logger.fatal(e)
+          @logger.fatal("[spektrix] #{e}")
         end
 
       end
@@ -149,15 +147,15 @@ module Rooftop
         begin
           tries ||= 2
           @spektrix_events.each_with_index do |event, i|
-            @logger.info("Sync #{i+1} / #{@spektrix_events.length}: #{event.title}")
+            @logger.info("[spektrix] Sync #{i+1} / #{@spektrix_events.length}: #{event.title}")
             item = EventSync.new(event, self)
             item.sync_to_rooftop
           end
         rescue => e
           if (tries -= 1).zero?
-            @logger.fatal("Not retrying...#{e.to_s}")
+            @logger.fatal("[spektrix] Not retrying...#{e.to_s}")
           else
-            @logger.error("Retrying...#{e.to_s}")
+            @logger.error("[spektrix] Retrying...#{e.to_s}")
             retry
           end
         end
@@ -176,7 +174,7 @@ module Rooftop
         Rooftop::Events::Event.where(post__in: rooftop_ids_to_delete).each do |rooftop_event|
           title = rooftop_event.title
           if rooftop_event.destroy
-            @logger.info("Removed Rooftop event #{title} which doesn't exist in Spektrix")
+            @logger.info("[spektrix] Removed Rooftop event #{title} which doesn't exist in Spektrix")
           end
         end
       end
@@ -187,7 +185,7 @@ module Rooftop
           spektrix_bands = Spektrix::Tickets::Band.all.to_a
           # create or update existing
           spektrix_bands.each do |band|
-            @logger.info("Updating band #{band.name}")
+            @logger.info("[spektrix] Updating band #{band.name}")
             rooftop_band = rooftop_bands.find {|b| b.title == band.name} || Rooftop::Events::PriceBand.new
             rooftop_band.title = band.name
             rooftop_band.save!
@@ -200,7 +198,7 @@ module Rooftop
             rooftop_bands.find {|b| b.title == title}.destroy
           end
         rescue => e
-          @logger.fatal(e.to_s)
+          @logger.fatal("[spektrix] #{e}")
         end
 
 
@@ -212,7 +210,7 @@ module Rooftop
           spektrix_ticket_types = Spektrix::Tickets::Type.all.to_a
           # create or update exiting
           spektrix_ticket_types.each do |type|
-            @logger.info("Updating ticket type #{type.name}")
+            @logger.info("[spektrix] Updating ticket type #{type.name}")
             rooftop_ticket_type = rooftop_ticket_types.find {|t| t.title == type.name} || Rooftop::Events::TicketType.new
             rooftop_ticket_type.title = type.name
             rooftop_ticket_type.save!
@@ -225,7 +223,7 @@ module Rooftop
             rooftop_ticket_types.find {|b| b.title == title}.destroy
           end
         rescue => e
-          @logger.fatal(e.to_s)
+          @logger.fatal("[spektrix] #{e}")
         end
       end
 
