@@ -3,7 +3,7 @@ namespace :rooftop do
 
     task :prepare, [:since, :logger_path] do |task, args|
       logger_path = args[:logger_path] || STDOUT
-      Rooftop::SpektrixSync.logger = Logger.new(logger_path, 'daily')
+      Rooftop::SpektrixSync.logger = defined?(::Rails) ? Rails.logger : Logger.new(logger_path, 'daily')
       @since = eval(args[:since]) rescue DateTime.now
       @options = eval(args[:options]) rescue {}
     end

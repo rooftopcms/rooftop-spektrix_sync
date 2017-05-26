@@ -20,7 +20,7 @@ module Rooftop
         end
         update_price
         if @rooftop_instance.price_list_id.nil?
-          @logger.warn("No price list for Spektrix instance id #{@spektrix_instance.id}")
+          @logger.error("No price list for Spektrix instance id #{@spektrix_instance.id}")
           return
         end
         update_meta_attributes
@@ -31,13 +31,13 @@ module Rooftop
           @rooftop_instance.meta_attributes[:spektrix_hash] = generate_spektrix_hash(@spektrix_instance)
 
           if @rooftop_instance.save!
-            @logger.debug("#{instance_updated ? "Updated" : "Created"} Rooftop instance #{@rooftop_instance.id}")
+            @logger.info("#{instance_updated ? "Updated" : "Created"} Rooftop instance #{@rooftop_instance.id}")
             return @rooftop_instance.id
           else
-            @logger.debug("\n\nCouldn't save instance\n\n")
+            @logger.info("\n\nCouldn't save instance\n\n")
           end
         else
-          @logger.debug("Skipping event instance save - computed hash matched")
+          @logger.info("Skipping event instance save - computed hash matched")
           return nil
         end
       end
